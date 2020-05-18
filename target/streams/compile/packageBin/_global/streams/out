@@ -1,0 +1,17 @@
+[debug] Packaging C:\IntelliJ IDEA 2019.2.2\FuncGraph\target\scala-2.12\funcgraph_2.12-0.1.jar ...
+[debug] Input file mappings:
+[debug] 	FuncGraph$$anon$1.class
+[debug] 	  C:\IntelliJ IDEA 2019.2.2\FuncGraph\target\scala-2.12\classes\FuncGraph$$anon$1.class
+[debug] 	FuncGraph$.class
+[debug] 	  C:\IntelliJ IDEA 2019.2.2\FuncGraph\target\scala-2.12\classes\FuncGraph$.class
+[debug] 	FuncGraph$delayedInit$body.class
+[debug] 	  C:\IntelliJ IDEA 2019.2.2\FuncGraph\target\scala-2.12\classes\FuncGraph$delayedInit$body.class
+[debug] 	FuncGraph.class
+[debug] 	  C:\IntelliJ IDEA 2019.2.2\FuncGraph\target\scala-2.12\classes\FuncGraph.class
+[debug] 	Window$$anon$1$$anon$2.class
+[debug] 	  C:\IntelliJ IDEA 2019.2.2\FuncGraph\target\scala-2.12\classes\Window$$anon$1$$anon$2.class
+[debug] 	Window$$anon$1.class
+[debug] 	  C:\IntelliJ IDEA 2019.2.2\FuncGraph\target\scala-2.12\classes\Window$$anon$1.class
+[debug] 	Window.class
+[debug] 	  C:\IntelliJ IDEA 2019.2.2\FuncGraph\target\scala-2.12\classes\Window.class
+[debug] Done packaging.
