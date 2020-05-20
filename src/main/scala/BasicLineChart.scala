@@ -8,7 +8,6 @@ import scalafx.embed.swing.SwingFXUtils
 import scalafx.scene.Scene
 import scalafx.scene.chart.{LineChart, NumberAxis, XYChart}
 import scalafx.scene.control._
-import scalafx.scene.image.WritableImage
 import scalafx.scene.layout.{BorderPane, HBox}
 import scalafx.stage.FileChooser
 
@@ -24,9 +23,9 @@ object BasicLineChart extends JFXApp {
         val saveMenu = new Menu("Save")
         val save = new MenuItem("Save as")
         save.onAction = _ => {
-          val extFilter = new FileChooser.ExtensionFilter("Image",  Seq("*.png, *.jpg"))
+          val extFilter = new FileChooser.ExtensionFilter("Image (*.png)",  "*.png")
           val fc = new FileChooser {
-            extensionFilters :+ extFilter
+            extensionFilters.+=(extFilter)
             title = "Save your plot:"
           }
           val file = fc.showSaveDialog(stage)
@@ -41,27 +40,32 @@ object BasicLineChart extends JFXApp {
         menuBar
       }
 
-      val textFieldsPane = new HBox(20) {
+      val txtBox = new HBox(20) {
         val enterRange = new TextField{
-          text = "Enter range:"
+          text = "0; pi"
         }
+        val enterRangeText = new Label("Enter range:")
         val enterA = new TextField{
-          text = "Enter a:"
+          text = "1"
         }
+        val enterAText = new Label("Enter a:")
         val enterB = new TextField{
-          text = "Enter b:"
+          text = "1"
         }
-        children = List(enterRange, enterA, enterB)
+        val enterBText = new Label("Enter b:")
+        val calculate = new Button("CALCULATE!!"){
+          onAction = _ => {
+            rootPane.center = areaChart( )
+          }
+          layoutX = 700
+          layoutY = 550
+        }
+        children = List(enterRangeText, enterRange, enterAText, enterA, enterBText, enterB, calculate)
       }
 
-      lazy val lineChart = {
-        val a = textFieldsPane.enterA.getText.toDouble
-        val b = textFieldsPane.enterB.getText.toDouble
-
-        val xAxis = NumberAxis("Values for X-Axis", -3*(b + a), 5 + b + a, 0.1)
-        val yAxis = NumberAxis("Values for Y-Axis", -1.5 - b - a, 1.5 + b + a, 1)
+      def areaChart(): LineChart[Number, Number] = {
         //parse range
-        val range = textFieldsPane.enterRange.getText.split(";").map{
+        def range(text: => String):Array[BigDecimal] = text.split(";").map{
           case expr if expr contains "*" =>
             val split = expr.split("\\*").map{
               case pi if pi contains "pi" => math.Pi
@@ -71,36 +75,38 @@ object BasicLineChart extends JFXApp {
           case pi if pi contains "pi" => BigDecimal(math.Pi)
           case num => BigDecimal(num.toDouble)
         }
-
         // Helper function to convert a tuple to `XYChart.Data`
         val toChartData = (xy: (Double, Double)) => XYChart.Data[Number, Number](xy._1, xy._2)
-        val series1 = new XYChart.Series[Number, Number] {
-          name = "Limacon"
-          val loop = for (i <- range(0).to(range(1), 0.1))
-            yield (a / 2 + b * math.cos(i.toDouble) + (a * math.cos(2 * i.toDouble) / 2),
-              b * math.sin(i.toDouble) + (a * math.sin(2 * i.toDouble) / 2))
-          data = loop.map(toChartData)
+        def computeLineChart(a: => Double, b: => Double): LineChart[Number, Number] = {
+          val series = new XYChart.Series[Number, Number] {
+            name = "Limacon"
+            val limacon = for (i <- range(txtBox.enterRange.getText)(0)
+              .to(range(txtBox.enterRange.getText)(1), 0.05))
+              yield (a / 2 + b * math.cos(i.toDouble) + (a * math.cos(2 * i.toDouble) / 2),
+                b * math.sin(i.toDouble) + (a * math.sin(2 * i.toDouble) / 2))
+            data = limacon.map(toChartData)
+          }
+          val lineChart = new LineChart[Number, Number](NumberAxis("Values for X-Axis", -3*(b + a),
+            5 + b + a, 0.1), NumberAxis("Values for Y-Axis", -1.5 - b - a, 1.5 + b + a, 1),
+            ObservableBuffer(series))
+          lineChart.setAnimated(false)
+          lineChart.setAxisSortingPolicy(LineChart.SortingPolicy.None)
+          lineChart
         }
-        val lineChart = new LineChart[Number, Number](xAxis, yAxis, ObservableBuffer(series1))
-        lineChart
+        computeLineChart(txtBox.enterA.getText.toDouble, txtBox.enterB.getText.toDouble)
       }
 
       def savePng(file: File): Unit = {
-        val img = lineChart.snapshot(null, new WritableImage(500, 400))
-        ImageIO.write(SwingFXUtils.fromFXImage(img, null), "png", file)
-      }
-      val calculate = new Button("CALCULATE!!"){
-        onAction = _ => {
-          var mutableLineChart = lineChart
-          rootPane.center = mutableLineChart
+        val img = rootPane.snapshot(null, null)
+        try{
+          ImageIO.write(SwingFXUtils.fromFXImage(img, null), "png", file)
+        } catch {
+          case _: Throwable => ()
         }
-        layoutX = 700
-        layoutY = 550
       }
       val rootPane = new BorderPane
       rootPane.top = menu
-      rootPane.bottom = textFieldsPane
-      rootPane.right = calculate
+      rootPane.bottom = txtBox
       root = rootPane
     }
   }
