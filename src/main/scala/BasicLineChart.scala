@@ -40,30 +40,32 @@ object BasicLineChart extends JFXApp {
         menuBar
       }
 
-      val txtBox = new HBox(20) {
+      val txtBox = new HBox() {
         val enterRange = new TextField{
           text = "0; pi"
         }
-        val enterRangeText = new Label("Enter range:")
+        val enterRangeText = new Label("Range:")
         val enterA = new TextField{
           text = "1"
         }
-        val enterAText = new Label("Enter a:")
+        val enterAText = new Label("A:")
         val enterB = new TextField{
           text = "1"
         }
-        val enterBText = new Label("Enter b:")
-        val calculate = new Button("CALCULATE!!"){
-          onAction = _ => {
-            rootPane.center = areaChart( )
-          }
-          layoutX = 700
-          layoutY = 550
+        val enterBText = new Label("B:")
+        val stepText = new Label("Step:")
+        val step = new TextField{
+          text = "0.05"
         }
-        children = List(enterRangeText, enterRange, enterAText, enterA, enterBText, enterB, calculate)
+        val calculate = new Button("Plot!"){
+          onAction = _ => {
+            rootPane.center = lineChart( )
+          }
+        }
+        children = List(enterRangeText, enterRange, enterAText, enterA, enterBText, enterB, stepText, step, calculate)
       }
 
-      def areaChart(): LineChart[Number, Number] = {
+      def lineChart(): LineChart[Number, Number] = {
         //parse range
         def range(text: => String):Array[BigDecimal] = text.split(";").map{
           case expr if expr contains "*" =>
@@ -77,11 +79,11 @@ object BasicLineChart extends JFXApp {
         }
         // Helper function to convert a tuple to `XYChart.Data`
         val toChartData = (xy: (Double, Double)) => XYChart.Data[Number, Number](xy._1, xy._2)
-        def computeLineChart(a: => Double, b: => Double): LineChart[Number, Number] = {
+        def computeLineChart(a: => Double, b: => Double, step: => Double): LineChart[Number, Number] = {
           val series = new XYChart.Series[Number, Number] {
             name = "Limacon"
             val limacon = for (i <- range(txtBox.enterRange.getText)(0)
-              .to(range(txtBox.enterRange.getText)(1), 0.05))
+              .to(range(txtBox.enterRange.getText)(1), step))
               yield (a / 2 + b * math.cos(i.toDouble) + (a * math.cos(2 * i.toDouble) / 2),
                 b * math.sin(i.toDouble) + (a * math.sin(2 * i.toDouble) / 2))
             data = limacon.map(toChartData)
@@ -93,7 +95,7 @@ object BasicLineChart extends JFXApp {
           lineChart.setAxisSortingPolicy(LineChart.SortingPolicy.None)
           lineChart
         }
-        computeLineChart(txtBox.enterA.getText.toDouble, txtBox.enterB.getText.toDouble)
+        computeLineChart(txtBox.enterA.getText.toDouble, txtBox.enterB.getText.toDouble, txtBox.step.getText.toDouble)
       }
 
       def savePng(file: File): Unit = {
