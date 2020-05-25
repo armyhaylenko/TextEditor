@@ -7,16 +7,15 @@ import scalafx.collections.ObservableBuffer
 import scalafx.embed.swing.SwingFXUtils
 import scalafx.scene.Scene
 import scalafx.scene.chart.{LineChart, NumberAxis, XYChart}
+import scalafx.scene.control.Alert.AlertType
 import scalafx.scene.control._
 import scalafx.scene.layout.{BorderPane, HBox}
 import scalafx.stage.FileChooser
 
 
 object BasicLineChart extends JFXApp {
-
-
   stage = new JFXApp.PrimaryStage {
-    title = "Line Chart Example"
+    title = "Pascal's loop"
     scene = new Scene(800, 600) {
       val menu = {
         val menuBar = new MenuBar
@@ -39,7 +38,6 @@ object BasicLineChart extends JFXApp {
         menuBar.menus = List(saveMenu)
         menuBar
       }
-
       val txtBox = new HBox() {
         val enterRange = new TextField{
           text = "0; pi"
@@ -55,49 +53,80 @@ object BasicLineChart extends JFXApp {
         val enterBText = new Label("B:")
         val stepText = new Label("Step:")
         val step = new TextField{
-          text = "0.05"
+          text = "0.1"
         }
-        val calculate = new Button("Plot!"){
+        val plot = new Button("PLOT!"){
           onAction = _ => {
-            rootPane.center = lineChart( )
+            rootPane.center = lineChart()
           }
+          //red button
+          style = "-fx-background-color: #ff0000;"
         }
-        children = List(enterRangeText, enterRange, enterAText, enterA, enterBText, enterB, stepText, step, calculate)
+        children = List(enterRangeText, enterRange, enterAText, enterA, enterBText, enterB, stepText, step, plot)
       }
 
       def lineChart(): LineChart[Number, Number] = {
+        val defaultErrorMessage = new Alert(AlertType.Error){
+          contentText = "Parsing failed. Wrong input. Building plot with value 1 in this field."
+        }
         //parse range
-        def range(text: => String):Array[BigDecimal] = text.split(";").map{
+        def range(text: => String):Array[BigDecimal] = text.split(";").map {
           case expr if expr contains "*" =>
-            val split = expr.split("\\*").map{
+            val split = expr.split("\\*").map {
               case pi if pi contains "pi" => math.Pi
-              case num => num.toDouble
+              case num => try{
+                num.toDouble
+              } catch {
+                case _: Throwable =>
+                  defaultErrorMessage.showAndWait()
+                  1
+              }
             }
-            BigDecimal(split(0) * split(1))
+              BigDecimal(split(0) * split(1))
           case pi if pi contains "pi" => BigDecimal(math.Pi)
-          case num => BigDecimal(num.toDouble)
+          case num => BigDecimal(try{
+            num.toDouble
+          } catch {
+            case _: Throwable =>
+              defaultErrorMessage.showAndWait()
+              1
+          })
         }
         // Helper function to convert a tuple to `XYChart.Data`
         val toChartData = (xy: (Double, Double)) => XYChart.Data[Number, Number](xy._1, xy._2)
         def computeLineChart(a: => Double, b: => Double, step: => Double): LineChart[Number, Number] = {
           val series = new XYChart.Series[Number, Number] {
-            name = "Limacon"
-            val limacon = for (i <- range(txtBox.enterRange.getText)(0)
-              .to(range(txtBox.enterRange.getText)(1), step))
+            name = "Pascal's loop"
+            val r = range(txtBox.enterRange.getText)
+            val limacon = for (i <- r(0).to(r(1), step))
               yield (a / 2 + b * math.cos(i.toDouble) + (a * math.cos(2 * i.toDouble) / 2),
                 b * math.sin(i.toDouble) + (a * math.sin(2 * i.toDouble) / 2))
             data = limacon.map(toChartData)
           }
-          val lineChart = new LineChart[Number, Number](NumberAxis("Values for X-Axis", -3*(b + a),
-            5 + b + a, 0.1), NumberAxis("Values for Y-Axis", -1.5 - b - a, 1.5 + b + a, 1),
-            ObservableBuffer(series))
-          lineChart.setAnimated(false)
+          val xAxis = NumberAxis("X-Axis")
+          xAxis autoRanging = true
+          val yAxis = NumberAxis("Y-Axis")
+          yAxis autoRanging = true
+          val lineChart = new LineChart[Number, Number](xAxis, yAxis, ObservableBuffer(series))
           lineChart.setAxisSortingPolicy(LineChart.SortingPolicy.None)
+          lineChart.setAnimated(false)
           lineChart
         }
-        computeLineChart(txtBox.enterA.getText.toDouble, txtBox.enterB.getText.toDouble, txtBox.step.getText.toDouble)
+        def parseFromTextBox(tf: =>TextField): Double = {
+          try{
+            tf.getText.toDouble
+          } catch {
+            case _: Throwable =>
+              defaultErrorMessage.show()
+              1
+          }
+        }
+        computeLineChart(parseFromTextBox(txtBox.enterA),
+          parseFromTextBox(txtBox.enterB),
+          parseFromTextBox(txtBox.step))
       }
 
+      //util function to save snapshot
       def savePng(file: File): Unit = {
         val img = rootPane.snapshot(null, null)
         try{
