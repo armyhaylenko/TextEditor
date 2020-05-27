@@ -1,0 +1,7 @@
+.text-area {
+    -fx-font-family: monospace;
+    -fx-text-fill: forestgreen;
+    -fx-control-inner-background: black;
+}
+
+
