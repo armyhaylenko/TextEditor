@@ -12,7 +12,7 @@ import scalafx.scene.text.Font
 import scalafx.stage.FileChooser
 
 import scala.io.Source
-import scala.util.Random
+import scala.util.{Failure, Random, Success, Try}
 
 object TextEditor extends JFXApp {
   val powerShell =
@@ -61,7 +61,11 @@ object TextEditor extends JFXApp {
                 headerText = "Enter desired font size"
               }
               dialog.showAndWait( ) match {
-                case Some(value) => changeFontSize(value.toInt)
+                case Some(value) =>
+                  Try(value.toInt) match {
+                    case Failure(_) => changeFontSize(11)
+                    case Success(value) => changeFontSize(value.toInt)
+                  }
                 case None => ()
               }
             }
